@@ -139,7 +139,7 @@ class Level {
         return tiles[tilePosition.x][tilePosition.y]
     }
     
-    func setCharacter(_ character: Character, on tilePosition: TilePosition) {
+    internal func setCharacter(_ character: Character, on tilePosition: TilePosition) {
         if let tile = getTile(at: tilePosition) {
             character.position = tile.position
             character.initialTilePosition = tilePosition
@@ -504,6 +504,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         return false
     }
     
+    func setCharacter(_ character: Character, on tilePosition: TilePosition) {
+        level?.setCharacter(character, on: tilePosition)
+        
+        switch character {
+        case is Player:
+            player = character as? Player
+        case is Partner:
+            partner = character as? Partner
+        case is Enemy:
+            enemies.append((character as? Enemy)!)
+        default:
+            print("Unknown character could not be set.")
+        }
+    }
+    
 }
 
 enum PartnerMode {
@@ -540,7 +555,7 @@ let scene = GameScene(size: CGSize(width: 500, height: 500))
 view.presentScene(scene)
 view.showsFPS = true
 
-let size = LevelSize(width: 5, height: 6)
+let size = LevelSize(width: 5, height: 7)
 let level = Level(size: size, scene: scene)
 level.setTile(type: .blocked, position: TilePosition(x: 4, y: 4))
 level.setTile(type: .blocked, position: TilePosition(x: 3, y: 2))
@@ -559,16 +574,11 @@ let walkingRoute = [e1, e2, e3]
 
 enemy.addWalkingRoute(walkingRoute)
 
-level.setCharacter(player, on: TilePosition(x: 0, y: 0))
-level.setCharacter(partner, on: TilePosition(x: 4, y: 5))
-level.setCharacter(enemy, on: e1)
-level.setCharacter(standingEnemy, on: TilePosition(x: 4, y: 0))
-
 scene.level = level
-scene.player = player
-scene.partner = partner
-scene.partnerMode = .opposite
-scene.enemies.append(enemy)
+scene.setCharacter(player, on: TilePosition(x: 0, y: 0))
+scene.setCharacter(partner, on: TilePosition(x: 4, y: 5))
+scene.setCharacter(enemy, on: e1)
+scene.setCharacter(standingEnemy, on: TilePosition(x: 4, y: 0))
 
 PlaygroundPage.current.liveView = view
 
