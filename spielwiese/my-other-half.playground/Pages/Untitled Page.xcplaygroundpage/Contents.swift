@@ -174,6 +174,8 @@ class Character: SKSpriteNode {
             color = .white
         case .bob?:
             color = .blue
+        case .charlie?:
+            color = .orange
         default:
             color = .black
         }
@@ -207,9 +209,31 @@ class Partner: Character {
     }
 }
 
+class Enemy: Character {
+    
+    var walkingRoute = [TilePosition]()
+    var currentWalkTileIndex = 0
+    /// Denotes whether we're currently going from first to last element in the
+    /// walkingRoute array or reversed (so from last element to first element.)
+    var reversed = false
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    required init(characterType: CharacterType?) {
+        super.init(characterType: characterType)
+    }
+    
+    func addWalkingRoute(_ walkingRouteTilePositions: [TilePosition]) {
+        walkingRoute = walkingRouteTilePositions
+    }
+}
+
 enum CharacterType {
     case alice
     case bob
+    case charlie
 }
 
 struct TilePosition {
@@ -233,6 +257,7 @@ class GameScene: SKScene {
     var player: Player?
     var partner: Partner?
     var partnerMode: PartnerMode = .opposite
+    var enemies = [Enemy]()
 
     override func keyDown(with event: NSEvent) {
         
@@ -275,8 +300,73 @@ class GameScene: SKScene {
             }
             
             moveCharacter(partner, inDirection: partnerDirection)
+            moveEnemies()
         }
         
+    }
+    
+    private func moveEnemies() {
+        enemies.forEach { (enemy) in
+
+            // Only animate enemies that actually have wakling routes.
+            if enemy.walkingRoute.count > 1 {
+                let currentIndex = enemy.currentWalkTileIndex
+
+                // Not reversed means that we are traversing through the
+                // walking route tile array from the first to the last entry.
+                if !enemy.reversed {
+                    
+                    // If reached end of the walking route array, reverse and
+                    // start from end.
+                    if currentIndex == enemy.walkingRoute.count - 1 {
+                        enemy.currentWalkTileIndex -= 1
+                        enemy.reversed = true
+                        
+                        if isWalkablePosition(at: enemy.walkingRoute[enemy.currentWalkTileIndex]) {
+                            moveCharacter(enemy, to: enemy.walkingRoute[enemy.currentWalkTileIndex])
+                        }
+                        
+                    } else {
+                        enemy.currentWalkTileIndex += 1
+
+                        if isWalkablePosition(at: enemy.walkingRoute[enemy.currentWalkTileIndex]) {
+                            moveCharacter(enemy, to: enemy.walkingRoute[enemy.currentWalkTileIndex])
+                        }
+                    }
+                    
+                // Reversed means that we are traversing through the
+                // walking route tile array from the last to the first entry.
+                } else {
+                    // If reached front again, start going through
+                    // array normally again.
+                    if currentIndex == 0 {
+                        enemy.currentWalkTileIndex += 1
+                        enemy.reversed = false
+                        
+                        if isWalkablePosition(at: enemy.walkingRoute[enemy.currentWalkTileIndex]) {
+                            moveCharacter(enemy, to: enemy.walkingRoute[enemy.currentWalkTileIndex])
+                        }
+                        
+                    } else {
+                        
+                        enemy.currentWalkTileIndex -= 1
+                        
+                        if isWalkablePosition(at: enemy.walkingRoute[enemy.currentWalkTileIndex]) {
+                            moveCharacter(enemy, to: enemy.walkingRoute[enemy.currentWalkTileIndex])
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private func moveCharacter(_ character: Character, to tilePosition: TilePosition) {
+        if isWalkablePosition(at: tilePosition) {
+            let tile = level?.getTile(at: tilePosition)
+            let moveAction = SKAction.move(to: (tile?.position)!,
+                                           duration: WALK_ANIMATION_DURATION)
+            character.run(moveAction)
+        }
     }
     
     private func moveCharacter(_ character: Character, inDirection direction: Direction) {
@@ -367,14 +457,28 @@ level.setTile(type: .blocked, position: TilePosition(x: 3, y: 2))
 
 let player = Player(characterType: .alice)
 let partner = Partner(characterType: .bob)
+let enemy = Enemy(characterType: .charlie)
+let standingEnemy = Enemy(characterType: .charlie)
+
+
+let e1 = TilePosition(x: 2, y: 2)
+let e2 = TilePosition(x: 2, y: 3)
+let e3 = TilePosition(x: 2, y: 4)
+
+let walkingRoute = [e1, e2, e3]
+
+enemy.addWalkingRoute(walkingRoute)
 
 level.setCharacter(player, on: TilePosition(x: 0, y: 0))
 level.setCharacter(partner, on: TilePosition(x: 4, y: 5))
+level.setCharacter(enemy, on: e1)
+level.setCharacter(standingEnemy, on: TilePosition(x: 4, y: 0))
 
 scene.level = level
 scene.player = player
 scene.partner = partner
 scene.partnerMode = .opposite
+scene.enemies.append(enemy)
 
 PlaygroundPage.current.liveView = view
 
