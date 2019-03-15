@@ -140,7 +140,7 @@ class Level {
     
     func setCharacter(_ character: Character, on tilePosition: TilePosition) {
         if let tile = getTile(at: tilePosition) {
-            character.position = tile!.position
+            character.position = tile.position
             character.tilePosition = tilePosition
             scene.addChild(character)
         }
