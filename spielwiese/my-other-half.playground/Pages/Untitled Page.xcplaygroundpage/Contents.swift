@@ -79,16 +79,33 @@ class BlockedTile: Tile {
     }
 }
 
+class RequiredToStandOnTile: Tile {
+    
+    // TODO: Missing tile reference.
+    init() {
+        super.init(walkable: true,
+                   texture: nil,
+                   color: .systemPurple,
+                   size: DEFAULT_TILE_SIZE)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
 enum TileType {
     case walkable
     case blocked
     case special
+    case requiredToStandOn
 }
 
 class Level {
     
     var tiles = [[Tile]]()
     var scene: SKScene
+    var requiresStandOnField = false
     
     /// https://stackoverflow.com/a/46251224/7217195
     init(size: LevelSize, scene: SKScene) {
@@ -115,6 +132,9 @@ class Level {
             tile = WalkableTile()
         case .blocked:
             tile = BlockedTile()
+        case .requiredToStandOn:
+            tile = RequiredToStandOnTile()
+            requiresStandOnField = true
         default:
             print("\(type) not supported yet, rendering WalkableTile instead.")
             tile = WalkableTile()
@@ -286,6 +306,28 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             && (contact.bodyB.node is Enemy) {
             endGame(withSuccess: false)
         }
+        
+        if (contact.bodyA.node is Player && contact.bodyB.node is Partner)
+            || (contact.bodyA.node is Partner && contact.bodyB.node is Player) {
+            
+            // If the level needs a required field to finish on, make sure to check
+            // that as well as its needed for the ending of the level.
+            
+            if ((level?.requiresStandOnField)!) {
+                if let player = contact.bodyA.node as? Character {
+                    if let tile = level?.getTile(at: player.tilePosition!) {
+                        if tile is RequiredToStandOnTile {
+                            endGame(withSuccess: true)
+                            return
+                        }
+                    }
+                }
+                // TODO: Handle here a nice error message that you're not
+                // standing on the correct tile!!!
+                return
+            }
+            endGame(withSuccess: true)
+        }
 
     }
 
@@ -338,11 +380,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             // Check if the partner and playerCharacter are next to each other,
             // because this also ends the game.
-            if playerAndPartnerNextToEachOther(player, partner) {
-                endGame(withSuccess: true)
-            } else {
-                moveEnemies()
-            }
+            moveEnemies()
+
         }
         
     }
@@ -382,18 +421,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         PlaygroundPage.current.liveView = finishScreen
     }
     
-    
-    
-    private func playerAndPartnerNextToEachOther(_ player: Player, _ partner: Partner) -> Bool {
-        let difX = abs(player.tilePosition!.x - partner.tilePosition!.x)
-        let difY = abs(player.tilePosition!.y - partner.tilePosition!.y)
-        
-        if (difX <= 1 && difY == 0) || (difY <= 1 && difX == 0) {
-            return true
-        }
-        
-        return false
-    }
     
     private func moveEnemies() {
         enemies.forEach { (enemy) in
@@ -559,6 +586,7 @@ let size = LevelSize(width: 5, height: 7)
 let level = Level(size: size, scene: scene)
 level.setTile(type: .blocked, position: TilePosition(x: 4, y: 4))
 level.setTile(type: .blocked, position: TilePosition(x: 3, y: 2))
+level.setTile(type: .requiredToStandOn, position: TilePosition(x: 2, y: 5))
 
 let player = Player(characterType: .alice)
 let partner = Partner(characterType: .bob)
