@@ -219,23 +219,52 @@ class GameScene: SKScene {
     
     var level: Level?
     var player: Player?
+    var partner: Partner?
+    var partnerMode: PartnerMode = .opposite
 
     override func keyDown(with event: NSEvent) {
         
-        if let player = player {
+        var direction: Direction? = nil
+        
+        if player != nil {
             switch event.keyCode {
             case LEFT_ARROW_KEY:
-                moveCharacter(player, inDirection: .left)
+                direction = .left
             case RIGHT_ARROW_KEY:
-                moveCharacter(player, inDirection: .right)
+                direction = .right
             case DOWN_ARROW_KEY:
-                moveCharacter(player, inDirection: .down)
+                direction = .down
             case UP_ARROW_KEY:
-                moveCharacter(player, inDirection: .up)
+                direction = .up
             default:
                 break
             }
+            
+            if direction != nil {
+                moveSceneCharacters(inPlayerDirection: direction!)
+            }
         }
+    }
+    
+    private func moveSceneCharacters(inPlayerDirection playerDirection: Direction) {
+        
+        if let player = player, let partner = partner {
+            
+            // Move the player first.
+            moveCharacter(player, inDirection: playerDirection)
+            
+            var partnerDirection: Direction
+            // Move partner depending on mode.
+            switch partnerMode {
+            case .opposite:
+                partnerDirection = playerDirection.opposite()
+            case .synchronised:
+                partnerDirection = playerDirection.synchronised()
+            }
+            
+            moveCharacter(partner, inDirection: partnerDirection)
+        }
+        
     }
     
     private func moveCharacter(_ character: Character, inDirection direction: Direction) {
@@ -265,11 +294,33 @@ class GameScene: SKScene {
     
 }
 
+enum PartnerMode {
+    case synchronised
+    case opposite
+}
+
 enum Direction {
     case left
     case right
     case down
     case up
+    
+    func opposite() -> Direction {
+        switch self {
+        case .left:
+            return .right
+        case .right:
+            return .left
+        case .down:
+            return .up
+        case .up:
+            return .down
+        }
+    }
+    
+    func synchronised() -> Direction {
+        return self
+    }
 }
 
 let view = SKView(frame: NSRect(x: 0, y: 0, width: 500, height: 500))
@@ -289,6 +340,7 @@ level.setCharacter(partner, on: TilePosition(x: 4, y: 5))
 
 scene.level = level
 scene.player = player
+scene.partner = partner
 
 PlaygroundPage.current.liveView = view
 
