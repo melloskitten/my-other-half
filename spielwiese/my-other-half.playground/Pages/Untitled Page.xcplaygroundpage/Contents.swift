@@ -16,6 +16,7 @@ extension SKSpriteNode {
 }
 
 // CONSTANTS:
+let ENEMY_CATEGORY: UInt32 = 1 << 1
 let DEFAULT_TILE_SIZE = CGSize(width: 50, height: 50)
 let DEFAULT_CHARACTER_SIZE = CGSize(width: 30, height: 40)
 let WALK_ANIMATION_DURATION = 0.15
@@ -181,6 +182,12 @@ class Character: SKSpriteNode {
         }
         
         super.init(texture: nil, color: color, size: DEFAULT_CHARACTER_SIZE)
+        // TODO: Does this really belong in this class?
+        self.physicsBody = SKPhysicsBody(rectangleOf: DEFAULT_CHARACTER_SIZE)
+        self.physicsBody!.collisionBitMask = 0
+        self.physicsBody!.contactTestBitMask = ENEMY_CATEGORY
+        self.physicsBody!.isDynamic = true
+        self.physicsBody?.affectedByGravity = false
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -251,13 +258,31 @@ let RIGHT_ARROW_KEY: UInt16 = 124
 let DOWN_ARROW_KEY: UInt16 = 125
 let UP_ARROW_KEY: UInt16 = 126
 
-class GameScene: SKScene {
+class GameScene: SKScene, SKPhysicsContactDelegate {
     
     var level: Level?
     var player: Player?
     var partner: Partner?
     var partnerMode: PartnerMode = .opposite
     var enemies = [Enemy]()
+    
+    override func sceneDidLoad() {
+        physicsWorld.contactDelegate = self
+    }
+    
+    func didBegin(_ contact: SKPhysicsContact) {
+        print("got contact.")
+        
+        if (contact.bodyA.node is Player || contact.bodyA.node is Partner)
+            && (contact.bodyB.node is Enemy) {
+            print("Got hit by an enemy!")
+        }
+        
+        if (contact.bodyA.node is Player && contact.bodyB.node is Partner) {
+            print("Found your other half!")
+        }
+
+    }
 
     override func keyDown(with event: NSEvent) {
         
