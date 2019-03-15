@@ -18,6 +18,7 @@ extension SKSpriteNode {
 // CONSTANTS:
 let DEFAULT_TILE_SIZE = CGSize(width: 50, height: 50)
 let DEFAULT_CHARACTER_SIZE = CGSize(width: 30, height: 40)
+let WALK_ANIMATION_DURATION = 0.15
 
 class Tile: SKSpriteNode {
     var walkable: Bool
@@ -129,15 +130,24 @@ class Level {
         scene.addChild(tile)
     }
     
-    func getTile(at tilePosition: TilePosition) -> Tile {
+    func getTile(at tilePosition: TilePosition) -> Tile? {
+        if tilePosition.x < 0 || tilePosition.y < 0
+            || tilePosition.x >= tiles.count || tilePosition.y >= tiles[0].count {
+            return nil
+        }
         return tiles[tilePosition.x][tilePosition.y]
     }
     
     func setCharacter(_ character: Character, on tilePosition: TilePosition) {
-        let tile = getTile(at: tilePosition)
-        character.position = tile.position
-        scene.addChild(character)
+        if let tile = getTile(at: tilePosition) {
+            character.position = tile!.position
+            character.tilePosition = tilePosition
+            scene.addChild(character)
+        }
+        
+        // TODO: Maybe some error handling?
     }
+        
     
     private func getPosition(_ forTilePosition: TilePosition) -> CGPoint {
         let positionX = forTilePosition.x * Int(DEFAULT_TILE_SIZE.width)
@@ -152,6 +162,8 @@ class Level {
 }
 
 class Character: SKSpriteNode {
+    
+    var tilePosition: TilePosition?
     
     required init(characterType: CharacterType? = nil) {
         // let texture: SKTexture?
@@ -269,27 +281,47 @@ class GameScene: SKScene {
     
     private func moveCharacter(_ character: Character, inDirection direction: Direction) {
         
+        // Initialise the action and potential tile position to check later.
         var moveAction = SKAction()
+        var tempTilePos: TilePosition
         
-        switch direction {
-        case .left:
-            let moveVector = CGVector(dx: -DEFAULT_TILE_SIZE.width, dy: 0)
-            moveAction = SKAction.move(by: moveVector, duration: 0.1)
-        
-        case .right:
-            let moveVector = CGVector(dx: DEFAULT_TILE_SIZE.width, dy: 0)
-            moveAction = SKAction.move(by: moveVector, duration: 0.1)
+        if let charPos = character.tilePosition {
             
-        case .down:
-            let moveVector = CGVector(dx: 0, dy: -DEFAULT_TILE_SIZE.height)
-            moveAction = SKAction.move(by: moveVector, duration: 0.1)
+            switch direction {
+            case .left:
+                tempTilePos = TilePosition(x: charPos.x-1, y: charPos.y)
+                let moveVector = CGVector(dx: -DEFAULT_TILE_SIZE.width, dy: 0)
+                moveAction = SKAction.move(by: moveVector, duration: WALK_ANIMATION_DURATION)
             
-        case .up:
-            let moveVector = CGVector(dx: 0, dy: DEFAULT_TILE_SIZE.height)
-            moveAction = SKAction.move(by: moveVector, duration: 0.1)
+            case .right:
+                tempTilePos = TilePosition(x: charPos.x+1, y: charPos.y)
+                let moveVector = CGVector(dx: DEFAULT_TILE_SIZE.width, dy: 0)
+                moveAction = SKAction.move(by: moveVector, duration: WALK_ANIMATION_DURATION)
+                
+            case .down:
+                tempTilePos = TilePosition(x: charPos.x, y: charPos.y-1)
+                let moveVector = CGVector(dx: 0, dy: -DEFAULT_TILE_SIZE.height)
+                moveAction = SKAction.move(by: moveVector, duration: WALK_ANIMATION_DURATION)
+                
+            case .up:
+                tempTilePos = TilePosition(x: charPos.x, y: charPos.y+1)
+                let moveVector = CGVector(dx: 0, dy: DEFAULT_TILE_SIZE.height)
+                moveAction = SKAction.move(by: moveVector, duration: WALK_ANIMATION_DURATION)
+            }
+
+            if isWalkablePosition(at: tempTilePos) {
+                character.tilePosition = tempTilePos
+                character.run(moveAction)
+            }
         }
-        
-        character.run(moveAction)
+    }
+
+    
+    func isWalkablePosition(at tilePosition: TilePosition) -> Bool {
+        if let tile = level?.getTile(at: tilePosition) {
+            return tile.walkable
+        }
+        return false
     }
     
 }
@@ -326,6 +358,7 @@ enum Direction {
 let view = SKView(frame: NSRect(x: 0, y: 0, width: 500, height: 500))
 let scene = GameScene(size: CGSize(width: 500, height: 500))
 view.presentScene(scene)
+view.showsFPS = true
 
 let size = LevelSize(width: 5, height: 6)
 let level = Level(size: size, scene: scene)
@@ -341,6 +374,7 @@ level.setCharacter(partner, on: TilePosition(x: 4, y: 5))
 scene.level = level
 scene.player = player
 scene.partner = partner
+scene.partnerMode = .opposite
 
 PlaygroundPage.current.liveView = view
 
