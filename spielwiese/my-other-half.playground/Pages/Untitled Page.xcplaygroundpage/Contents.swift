@@ -142,11 +142,19 @@ class Level {
     func setCharacter(_ character: Character, on tilePosition: TilePosition) {
         if let tile = getTile(at: tilePosition) {
             character.position = tile.position
+            character.initialTilePosition = tilePosition
             character.tilePosition = tilePosition
             scene.addChild(character)
         }
         
         // TODO: Maybe some error handling?
+    }
+    
+    func updatePosition(for character: Character, on tilePosition: TilePosition) {
+        if let tile = getTile(at: tilePosition) {
+            character.position = tile.position
+            character.tilePosition = tilePosition
+        }
     }
         
     
@@ -164,6 +172,7 @@ class Level {
 
 class Character: SKSpriteNode {
     
+    var initialTilePosition: TilePosition?
     var tilePosition: TilePosition?
     
     required init(characterType: CharacterType? = nil) {
@@ -207,6 +216,7 @@ class Player: Character {
 }
 
 class Partner: Character {
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -257,6 +267,7 @@ let LEFT_ARROW_KEY: UInt16 = 123
 let RIGHT_ARROW_KEY: UInt16 = 124
 let DOWN_ARROW_KEY: UInt16 = 125
 let UP_ARROW_KEY: UInt16 = 126
+let RETRY_KEY: UInt16 = 15
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
@@ -271,15 +282,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
-        print("got contact.")
-        
         if (contact.bodyA.node is Player || contact.bodyA.node is Partner)
             && (contact.bodyB.node is Enemy) {
-            print("Got hit by an enemy!")
-        }
-        
-        if (contact.bodyA.node is Player && contact.bodyB.node is Partner) {
-            print("Found your other half!")
+            endGame(withSuccess: false)
         }
 
     }
@@ -298,6 +303,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 direction = .down
             case UP_ARROW_KEY:
                 direction = .up
+            
+            // Move to mouse based input for this at some later point
+            // in time.
+            case RETRY_KEY:
+                retryGame()
             default:
                 break
             }
@@ -325,9 +335,64 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
             
             moveCharacter(partner, inDirection: partnerDirection)
-            moveEnemies()
+            
+            // Check if the partner and playerCharacter are next to each other,
+            // because this also ends the game.
+            if playerAndPartnerNextToEachOther(player, partner) {
+                endGame(withSuccess: true)
+            } else {
+                moveEnemies()
+            }
         }
         
+    }
+    
+    private func retryGame() {
+        // Maybe some nice loading animation would be good.
+        print("Retrying the game now!")
+        
+        // Reposition the player, partner and enemies.
+        if let player = player, let partner = partner {
+            level?.updatePosition(for: player, on: (player.initialTilePosition)!)
+            level?.updatePosition(for: partner, on: (partner.initialTilePosition)!)
+            
+            enemies.forEach { (enemy) in
+                level?.updatePosition(for: enemy, on: enemy.initialTilePosition!)
+            }
+            
+            PlaygroundPage.current.liveView = self.view
+        }
+    }
+    
+    private func endGame(withSuccess: Bool) {
+        
+        let finishScreen = NSView(frame: NSRect(x: 0, y: 0, width: 500, height: 500))
+        let finishText = NSTextField(frame: NSRect(x: 150, y: 250, width: 200, height: 200))
+        finishText.isBezeled = false
+        finishText.isEditable = false
+        switch withSuccess {
+        case true:
+            finishText.stringValue = "You found your love! Congrats!"
+            finishScreen.addSubview(finishText)
+        case false:
+            finishText.stringValue = "You got sidetracked by whatever. Try harder next time, your love is waiting for you!!!"
+            finishScreen.addSubview(finishText)
+        }
+        
+        PlaygroundPage.current.liveView = finishScreen
+    }
+    
+    
+    
+    private func playerAndPartnerNextToEachOther(_ player: Player, _ partner: Partner) -> Bool {
+        let difX = abs(player.tilePosition!.x - partner.tilePosition!.x)
+        let difY = abs(player.tilePosition!.y - partner.tilePosition!.y)
+        
+        if (difX <= 1 && difY == 0) || (difY <= 1 && difX == 0) {
+            return true
+        }
+        
+        return false
     }
     
     private func moveEnemies() {
