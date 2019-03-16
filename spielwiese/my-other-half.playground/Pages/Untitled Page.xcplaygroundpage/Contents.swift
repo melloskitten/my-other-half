@@ -22,20 +22,26 @@ enum PartnerMode {
 
 // CONSTANTS:
 let ENEMY_CATEGORY: UInt32 = 1
-let SWITCH_AND_ENEMY_CATEGORY: UInt32 = 3
+let SWITCH_CATEGORY: UInt32 = 4
+let BLOCKED_TILE_CATEGORY: UInt32 = 2
+let SWITCH_AND_ENEMY_CATEGORY: UInt32 = 5
+let SWITCH_ENEMY_BLOCKABLE_TILE_CATEGORY: UInt32 = 7
 let DEFAULT_TILE_SIZE = CGSize(width: 50, height: 50)
 let DEFAULT_CHARACTER_SIZE = CGSize(width: 30, height: 40)
 let WALK_ANIMATION_DURATION = 0.15
 
 class Tile: SKSpriteNode {
     var walkable: Bool
+    var tilePosition: TilePosition
     
     // TODO: Contemplate whether this is a good name?
     var objects: [SKSpriteNode]
     
-    init(walkable: Bool, texture: SKTexture?, color: NSColor, size: CGSize) {
+    init(walkable: Bool, texture: SKTexture?, color: NSColor, size: CGSize,
+         tilePosition: TilePosition) {
         self.walkable = walkable
         self.objects = []
+        self.tilePosition = tilePosition
         super.init(texture: texture, color: color, size: size)
         drawBorder(color: .darkGray, width: 1.0)
 
@@ -58,11 +64,12 @@ class Tile: SKSpriteNode {
 class WalkableTile: Tile {
     
     // TODO: Missing tile reference.
-    init() {
+    init(_ tilePosition: TilePosition) {
         super.init(walkable: true,
                    texture: nil,
                    color: .green,
-                   size: DEFAULT_TILE_SIZE)
+                   size: DEFAULT_TILE_SIZE,
+                   tilePosition: tilePosition)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -73,50 +80,16 @@ class WalkableTile: Tile {
 class BlockedTile: Tile {
     
     // TODO: Missing tile reference.
-    init() {
+    init(_ tilePosition: TilePosition) {
         super.init(walkable: false,
                    texture: nil,
                    color: .darkGray,
-                   size: DEFAULT_TILE_SIZE)
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class RequiredToStandOnTile: Tile {
-    
-    // TODO: Missing tile reference.
-    init() {
-        super.init(walkable: true,
-                   texture: nil,
-                   color: .systemPurple,
-                   size: DEFAULT_TILE_SIZE)
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-class SwitchTile: Tile {
-    
-    var partnerMode: PartnerMode?
-    
-    init(partnerMode: PartnerMode) {
-        self.partnerMode = partnerMode
-        
-        // TODO: Switch between tiles for the two modes.
-        let color: NSColor = partnerMode == .opposite ? .systemBlue : .systemRed
-
-        super.init(walkable: true,
-                   texture: nil,
-                   color: color,
-                   size: DEFAULT_TILE_SIZE)
+                   size: DEFAULT_TILE_SIZE,
+                   tilePosition: tilePosition)
         
         self.physicsBody = SKPhysicsBody(rectangleOf: DEFAULT_CHARACTER_SIZE)
-        self.physicsBody?.contactTestBitMask = SWITCH_AND_ENEMY_CATEGORY
+        self.physicsBody?.contactTestBitMask = BLOCKED_TILE_CATEGORY
+        self.physicsBody?.categoryBitMask = BLOCKED_TILE_CATEGORY
         self.physicsBody!.collisionBitMask = 0
         self.physicsBody!.isDynamic = true
         self.physicsBody?.affectedByGravity = false
@@ -127,6 +100,83 @@ class SwitchTile: Tile {
     }
 }
 
+class RequiredToStandOnTile: Tile {
+    
+    // TODO: Missing tile reference.
+    init(_ tilePosition: TilePosition) {
+        super.init(walkable: true,
+                   texture: nil,
+                   color: .systemPurple,
+                   size: DEFAULT_TILE_SIZE,
+                   tilePosition: tilePosition)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+class SwitchPartnerModeTile: Tile {
+    
+    var partnerMode: PartnerMode?
+    
+    init(_ tilePosition: TilePosition, _ partnerMode: PartnerMode) {
+        self.partnerMode = partnerMode
+        
+        // TODO: Switch between tiles for the two modes.
+        let color: NSColor = partnerMode == .opposite ? .systemBlue : .systemRed
+
+        super.init(walkable: true,
+                   texture: nil,
+                   color: color,
+                   size: DEFAULT_TILE_SIZE,
+                   tilePosition: tilePosition)
+        
+        self.physicsBody = SKPhysicsBody(rectangleOf: DEFAULT_CHARACTER_SIZE)
+        self.physicsBody?.contactTestBitMask = SWITCH_CATEGORY
+        self.physicsBody?.categoryBitMask = SWITCH_CATEGORY
+        self.physicsBody!.collisionBitMask = 0
+        self.physicsBody!.isDynamic = true
+        self.physicsBody?.affectedByGravity = false
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+// This tile flips a set of tiles from walkable to unwalkable and vice versa.
+class SwitchTile: Tile {
+    
+    var switchedTiles: [Tile]
+    
+    init(_ tilePosition: TilePosition, _ switchedTiles: [Tile]? = nil) {
+        if let existingTiles = switchedTiles {
+            self.switchedTiles = existingTiles
+        } else {
+            self.switchedTiles = [Tile]()
+        }
+        
+        super.init(walkable: true,
+                   texture: nil,
+                   color: .systemYellow,
+                   size: DEFAULT_TILE_SIZE,
+                   tilePosition: tilePosition)
+        
+        self.physicsBody = SKPhysicsBody(rectangleOf: DEFAULT_CHARACTER_SIZE)
+        self.physicsBody?.contactTestBitMask = SWITCH_CATEGORY
+        self.physicsBody?.categoryBitMask = SWITCH_CATEGORY
+        self.physicsBody!.collisionBitMask = 0
+        self.physicsBody!.isDynamic = true
+        self.physicsBody?.affectedByGravity = false
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+
 enum TileType {
     case walkable
     case blocked
@@ -134,6 +184,7 @@ enum TileType {
     case requiredToStandOn
     case switchToSyncMode
     case switchToOppositeMode
+    case switchTile
 }
 
 class Level {
@@ -150,7 +201,7 @@ class Level {
             tiles.append( [] )
             
             for y in 0...size.height-1 {
-                let walkableTile = WalkableTile()
+                let walkableTile = WalkableTile(.init(x: x, y: y))
                 let tilePosition = getPosition(x, y)
                 walkableTile.setPosition(to: tilePosition)
                 tiles[x].append(walkableTile)
@@ -159,24 +210,49 @@ class Level {
         }
     }
     
-    func setTile(type: TileType, position: TilePosition) {
+    func toggleTiles(_ toggleTiles: [Tile]) -> [Tile] {
+        var temp = [Tile]()
+        for tile in toggleTiles {
+            let oldTilePosition = tile.tilePosition
+            switch tile {
+            case is BlockedTile:
+                let tile = setAndReturnTile(type: .walkable, on: oldTilePosition)
+                temp.append(tile)
+            case is WalkableTile:
+                let tile = setAndReturnTile(type: .blocked, on: oldTilePosition)
+                temp.append(tile)
+            default:
+                let tile = setAndReturnTile(type: .walkable, on: oldTilePosition)
+                temp.append(tile)
+            }
+        }
+        return temp
+    }
+    
+    func setTile(type: TileType, on position: TilePosition) {
+        _ = setAndReturnTile(type: type, on: position)
+    }
+    
+    private func setAndReturnTile(type: TileType, on position: TilePosition) -> Tile {
         var tile: Tile
         
         switch type {
         case .walkable:
-            tile = WalkableTile()
+            tile = WalkableTile(position)
         case .blocked:
-            tile = BlockedTile()
+            tile = BlockedTile(position)
         case .requiredToStandOn:
-            tile = RequiredToStandOnTile()
+            tile = RequiredToStandOnTile(position)
             requiresStandOnField = true
         case .switchToOppositeMode:
-            tile = SwitchTile(partnerMode: .opposite)
+            tile = SwitchPartnerModeTile(position, .opposite)
         case .switchToSyncMode:
-            tile = SwitchTile(partnerMode: .synchronised)
+            tile = SwitchPartnerModeTile(position, .synchronised)
+        case .switchTile:
+            tile = SwitchTile(position)
         default:
             print("\(type) not supported yet, rendering WalkableTile instead.")
-            tile = WalkableTile()
+            tile = WalkableTile(position)
         }
         
         // Remove previous tile from scene.
@@ -188,7 +264,22 @@ class Level {
         
         // TODO: Perhaps move this adjustment to another class?
         scene.addChild(tile)
+        return tile
     }
+    
+    func setSwitchTile(on position: TilePosition,
+                       switchedTiles: [TilePosition: TileType] ) {
+        setTile(type: .switchTile, on: position)
+        let tile = getTile(at: position) as? SwitchTile
+        
+        for (tilePosition, tileType) in switchedTiles {
+            setTile(type: tileType, on: tilePosition)
+            let switchedTile = getTile(at: tilePosition)
+            tile?.switchedTiles.append(switchedTile!)
+        }
+        
+    }
+
     
     func getTile(at tilePosition: TilePosition) -> Tile? {
         if tilePosition.x < 0 || tilePosition.y < 0
@@ -203,6 +294,7 @@ class Level {
             character.position = tile.position
             character.initialTilePosition = tilePosition
             character.tilePosition = tilePosition
+            character.zPosition = 10000
             scene.addChild(character)
         }
         
@@ -271,7 +363,7 @@ class Player: Character {
     
     required init(characterType: CharacterType?) {
         super.init(characterType: characterType)
-        self.physicsBody?.contactTestBitMask = SWITCH_AND_ENEMY_CATEGORY
+        self.physicsBody?.contactTestBitMask = SWITCH_ENEMY_BLOCKABLE_TILE_CATEGORY
     }
 }
 
@@ -283,7 +375,7 @@ class Partner: Character {
     
     required init(characterType: CharacterType?) {
         super.init(characterType: characterType)
-        self.physicsBody?.contactTestBitMask = SWITCH_AND_ENEMY_CATEGORY
+        self.physicsBody?.contactTestBitMask = SWITCH_ENEMY_BLOCKABLE_TILE_CATEGORY
     }
 }
 
@@ -301,6 +393,8 @@ class Enemy: Character {
     
     required init(characterType: CharacterType?) {
         super.init(characterType: characterType)
+        self.physicsBody?.contactTestBitMask = ENEMY_CATEGORY
+        self.physicsBody?.categoryBitMask = ENEMY_CATEGORY
     }
     
     func addWalkingRoute(_ walkingRouteTilePositions: [TilePosition]) {
@@ -314,7 +408,7 @@ enum CharacterType {
     case charlie
 }
 
-struct TilePosition {
+struct TilePosition: Hashable {
     var x: Int
     var y: Int
 }
@@ -344,10 +438,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func didBegin(_ contact: SKPhysicsContact) {
         
-        if contact.bodyA.node is SwitchTile  {
-            if let switchTile = contact.bodyA.node as? SwitchTile {
-                partnerMode = switchTile.partnerMode!
+        if let _ = contact.bodyA.node as? BlockedTile, let character = contact.bodyB.node as? Character {
+            if character is Player || character is Partner {
+                endGame(withSuccess: false)
+                return
             }
+        }
+        
+        if let switchPartnerModeTile = contact.bodyA.node as? SwitchPartnerModeTile  {
+            partnerMode = switchPartnerModeTile.partnerMode!
+            return
+        }
+        
+        if let switchTile = contact.bodyA.node as? SwitchTile, let level = level {
+            switchTile.switchedTiles = level.toggleTiles(switchTile.switchedTiles)
         }
         
         if (contact.bodyA.node is Player || contact.bodyA.node is Partner)
@@ -626,11 +730,16 @@ view.showsFPS = true
 
 let size = LevelSize(width: 5, height: 7)
 let level = Level(size: size, scene: scene)
-level.setTile(type: .blocked, position: TilePosition(x: 4, y: 4))
-level.setTile(type: .blocked, position: TilePosition(x: 3, y: 2))
-// level.setTile(type: .requiredToStandOn, position: TilePosition(x: 2, y: 5))
-level.setTile(type: .switchToSyncMode, position: .init(x: 0, y: 3))
-level.setTile(type: .switchToOppositeMode, position: .init(x: 1, y: 3))
+level.setTile(type: .blocked, on: TilePosition(x: 4, y: 4))
+level.setTile(type: .blocked, on: TilePosition(x: 3, y: 2))
+level.setTile(type: .requiredToStandOn, on: TilePosition(x: 3, y: 5))
+// level.setTile(type: .switchToSyncMode, on: .init(x: 0, y: 3))
+// level.setTile(type: .blocked, on: .init(x: 1, y: 4))
+// level.setTile(type: .switchToSyncMode, on: .init(x: 2, y: 2))
+
+/*let switchedTiles: [TilePosition: TileType] = [ .init(x: 3, y: 5): .blocked,
+                                                .init(x: 4, y: 3):  .walkable]
+level.setSwitchTile(on: .init(x: 2, y: 5), switchedTiles: switchedTiles)*/
 
 let player = Player(characterType: .alice)
 let partner = Partner(characterType: .bob)
