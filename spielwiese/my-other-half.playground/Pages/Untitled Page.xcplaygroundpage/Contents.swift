@@ -15,8 +15,14 @@ extension SKSpriteNode {
     }
 }
 
+enum PartnerMode {
+    case synchronised
+    case opposite
+}
+
 // CONSTANTS:
-let ENEMY_CATEGORY: UInt32 = 1 << 1
+let ENEMY_CATEGORY: UInt32 = 1
+let SWITCH_AND_ENEMY_CATEGORY: UInt32 = 3
 let DEFAULT_TILE_SIZE = CGSize(width: 50, height: 50)
 let DEFAULT_CHARACTER_SIZE = CGSize(width: 30, height: 40)
 let WALK_ANIMATION_DURATION = 0.15
@@ -94,11 +100,40 @@ class RequiredToStandOnTile: Tile {
     }
 }
 
+class SwitchTile: Tile {
+    
+    var partnerMode: PartnerMode?
+    
+    init(partnerMode: PartnerMode) {
+        self.partnerMode = partnerMode
+        
+        // TODO: Switch between tiles for the two modes.
+        let color: NSColor = partnerMode == .opposite ? .systemBlue : .systemRed
+
+        super.init(walkable: true,
+                   texture: nil,
+                   color: color,
+                   size: DEFAULT_TILE_SIZE)
+        
+        self.physicsBody = SKPhysicsBody(rectangleOf: DEFAULT_CHARACTER_SIZE)
+        self.physicsBody?.contactTestBitMask = SWITCH_AND_ENEMY_CATEGORY
+        self.physicsBody!.collisionBitMask = 0
+        self.physicsBody!.isDynamic = true
+        self.physicsBody?.affectedByGravity = false
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
 enum TileType {
     case walkable
     case blocked
     case special
     case requiredToStandOn
+    case switchToSyncMode
+    case switchToOppositeMode
 }
 
 class Level {
@@ -135,6 +170,10 @@ class Level {
         case .requiredToStandOn:
             tile = RequiredToStandOnTile()
             requiresStandOnField = true
+        case .switchToOppositeMode:
+            tile = SwitchTile(partnerMode: .opposite)
+        case .switchToSyncMode:
+            tile = SwitchTile(partnerMode: .synchronised)
         default:
             print("\(type) not supported yet, rendering WalkableTile instead.")
             tile = WalkableTile()
@@ -232,6 +271,7 @@ class Player: Character {
     
     required init(characterType: CharacterType?) {
         super.init(characterType: characterType)
+        self.physicsBody?.contactTestBitMask = SWITCH_AND_ENEMY_CATEGORY
     }
 }
 
@@ -243,6 +283,7 @@ class Partner: Character {
     
     required init(characterType: CharacterType?) {
         super.init(characterType: characterType)
+        self.physicsBody?.contactTestBitMask = SWITCH_AND_ENEMY_CATEGORY
     }
 }
 
@@ -302,6 +343,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
+        
+        if contact.bodyA.node is SwitchTile  {
+            if let switchTile = contact.bodyA.node as? SwitchTile {
+                partnerMode = switchTile.partnerMode!
+            }
+        }
+        
         if (contact.bodyA.node is Player || contact.bodyA.node is Partner)
             && (contact.bodyB.node is Enemy) {
             endGame(withSuccess: false)
@@ -387,8 +435,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     private func retryGame() {
-        // Maybe some nice loading animation would be good.
-        print("Retrying the game now!")
+        // TODO: Maybe some nice loading animation would be good.
         
         // Reposition the player, partner and enemies.
         if let player = player, let partner = partner {
@@ -548,11 +595,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
 }
 
-enum PartnerMode {
-    case synchronised
-    case opposite
-}
-
 enum Direction {
     case left
     case right
@@ -586,7 +628,9 @@ let size = LevelSize(width: 5, height: 7)
 let level = Level(size: size, scene: scene)
 level.setTile(type: .blocked, position: TilePosition(x: 4, y: 4))
 level.setTile(type: .blocked, position: TilePosition(x: 3, y: 2))
-level.setTile(type: .requiredToStandOn, position: TilePosition(x: 2, y: 5))
+// level.setTile(type: .requiredToStandOn, position: TilePosition(x: 2, y: 5))
+level.setTile(type: .switchToSyncMode, position: .init(x: 0, y: 3))
+level.setTile(type: .switchToOppositeMode, position: .init(x: 1, y: 3))
 
 let player = Player(characterType: .alice)
 let partner = Partner(characterType: .bob)
