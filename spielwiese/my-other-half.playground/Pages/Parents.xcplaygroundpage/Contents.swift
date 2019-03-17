@@ -11,7 +11,7 @@ import SpriteKit
  
  ## How To
 
- - The love between Jack and his Dad are big - but sometimes, the urge to do the opposite of what your parents expect of you is equally big. Jack and his dad are doing _exactly  opposite moves_. This means if Jack walks to the right ➡️, Dad will walk to the left ⬅️, if Jack walks down ⬇️, Dad will walk up ⬆️.
+ - The love between Jack and his Dad is big - but sometimes, the urge to do the opposite of what your parents expect of you is equally big. Jack and his dad are doing _exactly  opposite moves_. This means if Jack walks to the right ➡️, Dad will walk to the left ⬅️, if Jack walks down ⬇️, Dad will walk up ⬆️.
  - Just like with every relationship, there are obstacles that can obstruct your path and make your life harder. And sometimes you're not going to jump in that lovely puddle because Dad told you not to! You cannot walk on bushes, puddles and rocks! 🌳 🌊
  - Take care of the crabs! 🦀 Crabbo and Crabbolino, two little crabs, are ready to pinch your toes if you walk on them! Sometimes they just sit in one place, and sometimes they walk back and forth in a specific pattern. Understand the pattern and it will be no problem to evade them.
  - ‼️ _You can __restart the level__ at any time by pressing the R button on your keyboard._
@@ -34,7 +34,7 @@ import SpriteKit
  */
 
 
-PlaygroundPage.current.liveView = Setup.firstLevel(.mom)
+PlaygroundPage.current.liveView = Setup.firstLevel(.dad)
 
 //: [Next](@next)
 

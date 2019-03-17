@@ -83,7 +83,4 @@ public func personalLevel() -> SKView {
 
 
 
-
-
-
 PlaygroundPage.current.liveView = personalLevel()
