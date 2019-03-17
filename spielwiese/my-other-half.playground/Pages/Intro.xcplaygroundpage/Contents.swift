@@ -11,6 +11,8 @@ import PlaygroundSupport
  
  >  Please note that every page of this playground has an accompanying live view, so make sure to hit that ▶️ button!
  
+ > Make sure to click into the window on the right so that you can properly play the game. Likewise, after restarting the level with the R button, make sure to click into the game window again.
+ 
  ## About Me & Sources
  My name is Sandra, and I am a 23 year old computer science student from Munich, Germany. Besides coding, I absolutely love to draw, and __all of the images used in this playground are drawn by myself__. Please enjoy! ❤️
  

@@ -109,7 +109,7 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
             case UP_ARROW_KEY:
                 direction = .up
                 
-                // Move to mouse based input for this at some later point
+            // Move to mouse based input for this at some later point
             // in time.
             case RETRY_KEY:
                 retryGame()
@@ -117,7 +117,7 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
                 break
             }
             
-            if direction != nil {
+            if direction != nil && finishScreen == nil {
                 moveSceneCharacters(inPlayerDirection: direction!)
             }
         }
@@ -150,22 +150,25 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     private func retryGame() {
-        // TODO: Maybe some nice loading animation would be good.
-        
         // Remove any potential finishScreen.
         finishScreen?.removeFromParent()
-        
+        finishScreen = nil
+    
         // Reposition the player, partner and enemies.
         if let player = player, let partner = partner {
             level?.updatePosition(for: player, on: (player.initialTilePosition)!)
             level?.updatePosition(for: partner, on: (partner.initialTilePosition)!)
+            partnerMode = .opposite
             
             enemies.forEach { (enemy) in
                 level?.updatePosition(for: enemy, on: enemy.initialTilePosition!)
+                enemy.currentWalkTileIndex = 0
+                enemy.reversed = false
             }
             
             PlaygroundPage.current.liveView = self.view
         }
+        
     }
     
     private func endGame(withSuccess: Bool) {

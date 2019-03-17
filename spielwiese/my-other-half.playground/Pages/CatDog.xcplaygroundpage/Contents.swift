@@ -1,5 +1,4 @@
 import PlaygroundSupport
-// TODO: Remove me!
 import SpriteKit
 
 
@@ -71,9 +70,7 @@ public func personalLevel() -> SKView {
         // Define his walking route.
         let e1 = TilePosition(x: 2, y: 2)
         let e2 = TilePosition(x: 2, y: 3)
-        let e3 = TilePosition(x: 2, y: 4)
-        let e4 = TilePosition(x: 2, y: 5)
-        let walkingRoute = [e1, e2, e3, e4]
+        let walkingRoute = [e1, e2]
 
         // Add it to the walking route of the enemy and put it on the first
         // tile of its walking route.
