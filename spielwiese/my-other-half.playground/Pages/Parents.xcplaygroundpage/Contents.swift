@@ -88,6 +88,8 @@ public func firstLevel(_ character: CharacterType) -> SKView {
 
 PlaygroundPage.current.liveView = firstLevel(.dad)
 
+//: [Next](@next)
+
 
 
 
