@@ -5,7 +5,7 @@ import PlaygroundSupport
 /// This is just for debugging purposes.
 /// TODO: Remove me when adding textures.
 /// https://stackoverflow.com/a/52708360/7217195
-extension SKSpriteNode {
+/* extension SKSpriteNode {
     func drawBorder(color: NSColor, width: CGFloat) {
         let shapeNode = SKShapeNode(rect: frame)
         shapeNode.fillColor = .clear
@@ -13,7 +13,7 @@ extension SKSpriteNode {
         shapeNode.lineWidth = width
         addChild(shapeNode)
     }
-}
+}*/
 
 enum PartnerMode {
     case synchronised
@@ -26,9 +26,42 @@ let SWITCH_CATEGORY: UInt32 = 4
 let BLOCKED_TILE_CATEGORY: UInt32 = 2
 let SWITCH_AND_ENEMY_CATEGORY: UInt32 = 5
 let SWITCH_ENEMY_BLOCKABLE_TILE_CATEGORY: UInt32 = 7
-let DEFAULT_TILE_SIZE = CGSize(width: 50, height: 50)
-let DEFAULT_CHARACTER_SIZE = CGSize(width: 30, height: 40)
+let DEFAULT_TILE_SIZE = CGSize(width: 65, height: 65)
+let DEFAULT_CHARACTER_SIZE = CGSize(width: 50, height: 60)
 let WALK_ANIMATION_DURATION = 0.15
+
+// Tile constants:
+let SWITCH = "switch.png"
+let SWITCHABLE_BLOCKED = "switchable_blocked.png"
+let SWITCHABLE_WALKABLE = "switchable_walkable.png"
+let SWITCH_SYM = "switch_partner_node_sym"
+let SWITCH_OPP = "switch_partner_node_opp"
+let REQUIRED_TILE = "altar.png"
+let WALKABLE_TEXTURES = ["walkable_1.png", "walkable_2.png",
+                         "walkable_3.png", "walkable_3.png", "walkable_2.png", "walkable_2.png", "walkable_2.png", "walkable_2.png", "walkable_2.png", "walkable_2.png", "walkable_2.png", "walkable_2.png", "walkable_2.png", "walkable_2.png"]
+let BLOCKED_TEXTURES = ["blocked_1.png", "blocked_2.png",
+                        "blocked_3.png", "blocked_4.png",
+                        "blocked_4.png",
+                        "blocked_4.png",
+                        "blocked_4.png",
+                        "blocked_5.png"]
+
+// Character constants:
+let MOM = "mom.png"
+let DAD = "dad.png"
+let SON = "son.png"
+let GROOM_BOB = "groom_bob.png"
+let BRIDE_ALICE = "bride_alice.png"
+let BRIDE_CARLA = "bride_carla.png"
+let BRIDE_DALIA = "bride_dalia.png"
+let CATTO = "catto.png"
+let DOGGO = "doggo.png"
+let CRABBO = "crabbo.png"
+let CRABBOLINO = "crabbolino.png"
+
+// Screen constants:
+let SUCCESS_SCREEN = "success_screen.png"
+let FAILURE_SCREEN = "failure_screen.png"
 
 class Tile: SKSpriteNode {
     var walkable: Bool
@@ -43,7 +76,6 @@ class Tile: SKSpriteNode {
         self.objects = []
         self.tilePosition = tilePosition
         super.init(texture: texture, color: color, size: size)
-        drawBorder(color: .darkGray, width: 1.0)
 
     }
     
@@ -51,11 +83,14 @@ class Tile: SKSpriteNode {
         fatalError("init(coder:) has not been implemented")
     }
     
+    let X_OFFSET: CGFloat = (GAME_SCENE_SIZE.width - 7.0 * DEFAULT_TILE_SIZE.width) / 2.0 - DEFAULT_TILE_SIZE.width / 4.0
+    let Y_OFFSET: CGFloat = 30
+    
     /// Convenience method for setting the position of the lower left hand
     /// corner of the sprite, as opposed to the center.
     func setPosition(to: CGPoint) {
-        let widthOffset = self.frame.width / 2
-        let heightOffset = self.frame.height / 2
+        let widthOffset = X_OFFSET + self.frame.width / 2
+        let heightOffset = Y_OFFSET + self.frame.height / 2
         self.position = CGPoint(x: to.x + widthOffset,
                                 y: to.y + heightOffset)
     }
@@ -65,12 +100,15 @@ class WalkableTile: Tile {
     
     // TODO: Missing tile reference.
     init(_ tilePosition: TilePosition) {
+        
+        let texture = SKTexture(imageNamed: WALKABLE_TEXTURES.randomElement()!)
         super.init(walkable: true,
-                   texture: nil,
+                   texture: texture,
                    color: .green,
                    size: DEFAULT_TILE_SIZE,
                    tilePosition: tilePosition)
     }
+
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -81,8 +119,10 @@ class BlockedTile: Tile {
     
     // TODO: Missing tile reference.
     init(_ tilePosition: TilePosition) {
+        
+        let texture = SKTexture(imageNamed: BLOCKED_TEXTURES.randomElement()!)
         super.init(walkable: false,
-                   texture: nil,
+                   texture: texture,
                    color: .darkGray,
                    size: DEFAULT_TILE_SIZE,
                    tilePosition: tilePosition)
@@ -104,8 +144,11 @@ class RequiredToStandOnTile: Tile {
     
     // TODO: Missing tile reference.
     init(_ tilePosition: TilePosition) {
+        
+        let texture = SKTexture(imageNamed: REQUIRED_TILE)
+        
         super.init(walkable: true,
-                   texture: nil,
+                   texture: texture,
                    color: .systemPurple,
                    size: DEFAULT_TILE_SIZE,
                    tilePosition: tilePosition)
@@ -124,11 +167,12 @@ class SwitchPartnerModeTile: Tile {
         self.partnerMode = partnerMode
         
         // TODO: Switch between tiles for the two modes.
-        let color: NSColor = partnerMode == .opposite ? .systemBlue : .systemRed
+        let textureName = partnerMode == .opposite ? SWITCH_OPP : SWITCH_SYM
+        let texture = SKTexture(imageNamed: textureName)
 
         super.init(walkable: true,
-                   texture: nil,
-                   color: color,
+                   texture: texture,
+                   color: .orange,
                    size: DEFAULT_TILE_SIZE,
                    tilePosition: tilePosition)
         
@@ -157,8 +201,10 @@ class SwitchTile: Tile {
             self.switchedTiles = [Tile]()
         }
         
+        let texture = SKTexture(imageNamed: SWITCH)
+        
         super.init(walkable: true,
-                   texture: nil,
+                   texture: texture,
                    color: .systemYellow,
                    size: DEFAULT_TILE_SIZE,
                    tilePosition: tilePosition)
@@ -321,27 +367,59 @@ class Level {
     
 }
 
+enum CharacterType {
+    case mom
+    case dad
+    case son
+    case groomBob
+    case brideAlice
+    case brideCarla
+    case brideDalia
+    case catto
+    case doggo
+    case crabbo
+    case crabbolino
+}
+
 class Character: SKSpriteNode {
     
     var initialTilePosition: TilePosition?
     var tilePosition: TilePosition?
     
     required init(characterType: CharacterType? = nil) {
-        // let texture: SKTexture?
+        var imagePath: String = ""
         let color: NSColor
         
         switch characterType {
-        case .alice?:
-            color = .white
-        case .bob?:
-            color = .blue
-        case .charlie?:
-            color = .orange
+        case .mom?:
+            imagePath = MOM
+        case .dad?:
+            imagePath = DAD
+        case .son?:
+            imagePath = SON
+        case .groomBob?:
+            imagePath = GROOM_BOB
+        case .brideAlice?:
+            imagePath = BRIDE_ALICE
+        case .brideCarla?:
+            imagePath = BRIDE_CARLA
+        case .brideDalia?:
+            imagePath = BRIDE_DALIA
+        case .catto?:
+            imagePath = CATTO
+        case .doggo?:
+            imagePath = DOGGO
+        case .crabbo?:
+            imagePath = CRABBO
+        case .crabbolino?:
+            imagePath = CRABBOLINO
         default:
-            color = .black
+            break
         }
         
-        super.init(texture: nil, color: color, size: DEFAULT_CHARACTER_SIZE)
+        let texture = SKTexture(imageNamed: imagePath)
+        
+        super.init(texture: texture, color: .black, size: DEFAULT_CHARACTER_SIZE)
         // TODO: Does this really belong in this class?
         self.physicsBody = SKPhysicsBody(rectangleOf: DEFAULT_CHARACTER_SIZE)
         self.physicsBody!.collisionBitMask = 0
@@ -364,8 +442,11 @@ class Player: Character {
     required init(characterType: CharacterType?) {
         super.init(characterType: characterType)
         self.physicsBody?.contactTestBitMask = SWITCH_ENEMY_BLOCKABLE_TILE_CATEGORY
+        self.texture?.filteringMode = .nearest
     }
+    
 }
+    
 
 class Partner: Character {
     
@@ -402,12 +483,6 @@ class Enemy: Character {
     }
 }
 
-enum CharacterType {
-    case alice
-    case bob
-    case charlie
-}
-
 struct TilePosition: Hashable {
     var x: Int
     var y: Int
@@ -431,6 +506,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var partner: Partner?
     var partnerMode: PartnerMode = .opposite
     var enemies = [Enemy]()
+    var finishScreen: SKSpriteNode?
     
     override func sceneDidLoad() {
         physicsWorld.contactDelegate = self
@@ -541,6 +617,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     private func retryGame() {
         // TODO: Maybe some nice loading animation would be good.
         
+        // Remove any potential finishScreen.
+        finishScreen?.removeFromParent()
+        
         // Reposition the player, partner and enemies.
         if let player = player, let partner = partner {
             level?.updatePosition(for: player, on: (player.initialTilePosition)!)
@@ -556,22 +635,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     private func endGame(withSuccess: Bool) {
         
-        let finishScreen = NSView(frame: NSRect(x: 0, y: 0, width: 500, height: 500))
-        let finishText = NSTextField(frame: NSRect(x: 150, y: 250, width: 200, height: 200))
-        finishText.isBezeled = false
-        finishText.isEditable = false
         switch withSuccess {
         case true:
-            finishText.stringValue = "You found your love! Congrats!"
-            finishScreen.addSubview(finishText)
+            finishScreen = SKSpriteNode(imageNamed: SUCCESS_SCREEN)
+
         case false:
-            finishText.stringValue = "You got sidetracked by whatever. Try harder next time, your love is waiting for you!!!"
-            finishScreen.addSubview(finishText)
+            finishScreen = SKSpriteNode(imageNamed: FAILURE_SCREEN)
         }
         
-        PlaygroundPage.current.liveView = finishScreen
+        finishScreen?.position = CGPoint(x: 350, y: 400)
+        finishScreen?.zPosition = 100000000
+        self.addChild(finishScreen!)
     }
-    
     
     private func moveEnemies() {
         enemies.forEach { (enemy) in
@@ -723,12 +798,20 @@ enum Direction {
     }
 }
 
-let view = SKView(frame: NSRect(x: 0, y: 0, width: 500, height: 500))
-let scene = GameScene(size: CGSize(width: 500, height: 500))
+let GAME_SCENE_SIZE = CGSize(width: 700, height: 800)
+
+let view = SKView(frame: NSRect(x: 0, y: 0, width: 700, height: 800))
+let scene = GameScene(size: GAME_SCENE_SIZE)
+let backgroundImage = SKSpriteNode(imageNamed: "bg.png")
+backgroundImage.texture?.filteringMode = .nearest
+backgroundImage.zPosition = -10000
+backgroundImage.position = CGPoint(x: backgroundImage.frame.width/2 , y: backgroundImage.frame.height/2)
+scene.addChild(backgroundImage)
+
 view.presentScene(scene)
 view.showsFPS = true
 
-let size = LevelSize(width: 5, height: 7)
+let size = LevelSize(width: 7, height: 7)
 let level = Level(size: size, scene: scene)
 level.setTile(type: .blocked, on: TilePosition(x: 4, y: 4))
 level.setTile(type: .blocked, on: TilePosition(x: 3, y: 2))
@@ -741,10 +824,10 @@ level.setTile(type: .requiredToStandOn, on: TilePosition(x: 3, y: 5))
                                                 .init(x: 4, y: 3):  .walkable]
 level.setSwitchTile(on: .init(x: 2, y: 5), switchedTiles: switchedTiles)*/
 
-let player = Player(characterType: .alice)
-let partner = Partner(characterType: .bob)
-let enemy = Enemy(characterType: .charlie)
-let standingEnemy = Enemy(characterType: .charlie)
+let player = Player(characterType: .dad)
+let partner = Partner(characterType: .mom)
+let enemy = Enemy(characterType: .crabbo)
+let standingEnemy = Enemy(characterType: .crabbolino)
 
 
 let e1 = TilePosition(x: 2, y: 2)
