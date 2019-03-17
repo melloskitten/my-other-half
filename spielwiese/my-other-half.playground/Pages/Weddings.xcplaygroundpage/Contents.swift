@@ -1,6 +1,10 @@
-import Cocoa
-import SpriteKit
 import PlaygroundSupport
+// TODO: Remove me!
+import SpriteKit
+
+//:  ![A picture of Alice and Bob marrying.](alice_and_bob.png)
+//:  ![A picture of Carla and Dalia marrying.](carla_and_dalia.png)
+
 
 
 let view = SKView(frame: NSRect(x: 0, y: 0, width: 700, height: 800))
@@ -30,8 +34,8 @@ level.setTile(type: .requiredToStandOn, on: TilePosition(x: 3, y: 5))
 // level.setTile(type: .switchToSyncMode, on: .init(x: 2, y: 2))
 
 /*let switchedTiles: [TilePosition: TileType] = [ .init(x: 3, y: 5): .blocked,
-                                                .init(x: 4, y: 3):  .walkable]
-level.setSwitchTile(on: .init(x: 2, y: 5), switchedTiles: switchedTiles)*/
+ .init(x: 4, y: 3):  .walkable]
+ level.setSwitchTile(on: .init(x: 2, y: 5), switchedTiles: switchedTiles)*/
 
 let player = Player(characterType: .dad)
 let partner = Partner(characterType: .mom)
