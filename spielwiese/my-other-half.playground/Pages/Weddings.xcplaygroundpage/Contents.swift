@@ -37,12 +37,12 @@ import SpriteKit
  
  */
 
-PlaygroundPage.current.liveView = wedding(.brideAlice, .brideDalia)
+PlaygroundPage.current.liveView = secondLevel(.brideAlice, .brideDalia)
 
 //: [Next](@next)
 
 
-public func wedding(_ partnerA: CharacterType, _ partnerB: CharacterType) -> SKView {
+public func secondLevel(_ partnerA: CharacterType, _ partnerB: CharacterType) -> SKView {
     
     let view = Setup.getStandardBGViewAndScene()
     if let scene = view.scene as? GameScene {

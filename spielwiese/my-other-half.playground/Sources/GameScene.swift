@@ -21,6 +21,16 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
         self.level = level
     }
     
+    public func turnOnBuildMode() {
+        if let level = level {
+            level.tiles.forEach { (tiles) in
+                tiles.forEach({ (tile) in
+                    tile.drawBorder(color: .gray, width: 2.0)
+                })
+            }
+        }
+    }
+    
     public func didBegin(_ contact: SKPhysicsContact) {
         if let _ = contact.bodyA.node as? BlockedTile, let character = contact.bodyB.node as? Character {
             if character is Player || character is Partner {

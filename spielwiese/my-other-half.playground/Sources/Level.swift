@@ -9,7 +9,8 @@ public class Level {
     var requiresStandOnField = false
     
     /// https://stackoverflow.com/a/46251224/7217195
-    public init(size: LevelSize, scene: SKScene) {
+    public init(size: LevelSize, scene: SKScene,
+                buildMode: Bool = false) {
         self.scene = scene
         
         for x in 0...size.width-1 {
@@ -17,6 +18,9 @@ public class Level {
             
             for y in 0...size.height-1 {
                 let walkableTile = WalkableTile(.init(x: x, y: y))
+                if buildMode {
+                    walkableTile.drawBorder(color: NSColor(red:0.98, green:0.86, blue:0.81, alpha:1.0), width: 1.0)
+                }
                 let tilePosition = getPosition(x, y)
                 walkableTile.setPosition(to: tilePosition)
                 tiles[x].append(walkableTile)
