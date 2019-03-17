@@ -13,27 +13,37 @@ import SpriteKit
  ## How To
 
  - The love between Jack and his Dad are big - but sometimes, the urge to do the opposite of what your parents expect of you is equally big. Jack and his dad are doing _exactly  opposite moves_. This means if Jack walks to the right ➡️, Dad will walk to the left ⬅️, if Jack walks down ⬇️, Dad will walk up ⬆️.
- - Just like with every relationship, there are obstacles that can obstruct your path and make your life harder. You cannot walk on bushes, puddles and rocks! 🌳 🌊
+ - Just like with every relationship, there are obstacles that can obstruct your path and make your life harder. And sometimes you're not going to jump in that lovely puddle because Dad told you not to! You cannot walk on bushes, puddles and rocks! 🌳 🌊
  - Take care of the crabs! 🦀 Crabbo and Crabbolino, two little crabs, are ready to pinch your toes if you walk on them! Sometimes they just sit in one place, and sometimes they walk back and forth in a specific pattern. Understand the pattern and it will be no problem to evade them.
+ - ‼️ You can __restart the level__ at any time by pressing the R button on your keyboard.
  
 
 ## Mom, where are you?
 
  - Do you want to let Jack find his mom, too? Just change the method below from `.dad` to `.mom` 
 
+ ## Hint
+ 
+ A possible solution for the level is:
+- 3 x ⬆️
+ - 1 x ➡️
+ - 1 x ⬅️
+ - 1 x ➡️
+ - 1 x ⬅️
+ - 3 x ➡️
+ 
  */
 
 
 
 
-public func momDadChild() -> SKView {
+public func firstLevel(_ character: CharacterType) -> SKView {
 
     let view = Setup.getStandardBGViewAndScene()
     if let scene = view.scene as? GameScene {
         // TODO: Create proper level here!
         let size = LevelSize(width: 7, height: 7)
         let level = Level(size: size, scene: scene)
-        // level.setTile(type: <#T##TileType#>, on: <#T##TilePosition#>)
         level.setTile(type: .blocked, on: TilePosition(x: 4, y: 4))
         level.setTile(type: .blocked, on: TilePosition(x: 3, y: 2))
         level.setTile(type: .blocked, on: TilePosition(x: 2, y: 6))
@@ -46,8 +56,8 @@ public func momDadChild() -> SKView {
          .init(x: 4, y: 3):  .walkable]
          level.setSwitchTile(on: .init(x: 2, y: 5), switchedTiles: switchedTiles)*/
         
-        let player = Player(characterType: .dad)
-        let partner = Partner(characterType: .son)
+        let player = Player(characterType: .son)
+        let partner = Partner(characterType: character)
         let enemy = Enemy(characterType: .crabbo)
         let standingEnemy = Enemy(characterType: .crabbolino)
         
@@ -76,7 +86,7 @@ public func momDadChild() -> SKView {
 
 
 
-PlaygroundPage.current.liveView = momDadChild()
+PlaygroundPage.current.liveView = firstLevel(.dad)
 
 
 
