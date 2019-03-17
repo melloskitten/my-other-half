@@ -22,7 +22,6 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     public func didBegin(_ contact: SKPhysicsContact) {
-        
         if let _ = contact.bodyA.node as? BlockedTile, let character = contact.bodyB.node as? Character {
             if character is Player || character is Partner {
                 endGame(withSuccess: false)
@@ -41,29 +40,46 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
         
         if (contact.bodyA.node is Player || contact.bodyA.node is Partner)
             && (contact.bodyB.node is Enemy) {
-            endGame(withSuccess: false)
+            if let character = contact.bodyA.node as? Character,
+                let enemy = contact.bodyB.node as? Enemy {
+                if character.tilePosition == enemy.tilePosition {
+                    endGame(withSuccess: false)
+                }
+            }
+
         }
         
-        if (contact.bodyA.node is Player && contact.bodyB.node is Partner)
-            || (contact.bodyA.node is Partner && contact.bodyB.node is Player) {
-            
-            // If the level needs a required field to finish on, make sure to check
-            // that as well as its needed for the ending of the level.
-            
-            if ((level?.requiresStandOnField)!) {
-                if let player = contact.bodyA.node as? Character {
-                    if let tile = level?.getTile(at: player.tilePosition!) {
-                        if tile is RequiredToStandOnTile {
-                            endGame(withSuccess: true)
-                            return
-                        }
-                    }
-                }
-                // TODO: Handle here a nice error message that you're not
-                // standing on the correct tile!!!
+        if (contact.bodyA.node is Player &&
+            contact.bodyB.node is RequiredToStandOnTile) || ((contact.bodyB.node is Player &&
+                contact.bodyA.node is RequiredToStandOnTile)) {
+            // Check if the partner is in the same position
+            if partner?.tilePosition == player?.tilePosition {
+                endGame(withSuccess: true)
                 return
             }
-            endGame(withSuccess: true)
+        } else {
+            
+            if (contact.bodyA.node is Player && contact.bodyB.node is Partner)
+                || (contact.bodyA.node is Partner && contact.bodyB.node is Player) {
+                
+                // If the level needs a required field to finish on, make sure to check
+                // that as well as its needed for the ending of the level.
+                
+                if ((level?.requiresStandOnField)!) {
+                    if let player = contact.bodyA.node as? Character {
+                        if let tile = level?.getTile(at: player.tilePosition!) {
+                            if tile is RequiredToStandOnTile {
+                                endGame(withSuccess: true)
+                                return
+                            }
+                        }
+                    }
+                    // TODO: Handle here a nice error message that you're not
+                    // standing on the correct tile!!!
+                    return
+                }
+                endGame(withSuccess: true)
+            }
         }
         
     }
@@ -217,6 +233,7 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
             let tile = level?.getTile(at: tilePosition)
             let moveAction = SKAction.move(to: (tile?.position)!,
                                            duration: WALK_ANIMATION_DURATION)
+            character.tilePosition = tilePosition
             character.run(moveAction)
         }
     }
