@@ -2,7 +2,6 @@ import Cocoa
 import SpriteKit
 import PlaygroundSupport
 
-
 // This tile flips a set of tiles from walkable
 // to unwalkable and vice versa.
 class SwitchTile: Tile {

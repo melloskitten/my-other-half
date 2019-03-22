@@ -35,7 +35,6 @@ public func personalLevel() -> SKView {
         let size = LevelSize(width: 7, height: 7)
         let level = Level(size: size, scene: scene, buildMode: buildMode)
         
-        
         // You can set blocked tiles in the following way:
         // This sets a tile such as a bush, puddle, or rock on on position 4,4.
         level.setTile(type: .blocked, on: .init(x: 4, y: 4))
@@ -47,6 +46,7 @@ public func personalLevel() -> SKView {
         // This is a tile that lets your characters walk in the opposite way.
         level.setTile(type: .switchToOppositeMode, on: .init(x: 0, y: 6))
         
+        // Then, make sure to integrate the level into your scene.
         scene.setLevel(level)
         
         // Here you can define your player.
