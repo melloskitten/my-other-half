@@ -2,6 +2,7 @@ import Cocoa
 import SpriteKit
 import PlaygroundSupport
 
+/// Struct representing TilePositions.
 public struct TilePosition: Hashable {
     public var x: Int
     public var y: Int

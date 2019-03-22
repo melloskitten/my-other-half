@@ -1,26 +1,49 @@
 import Foundation
-
 import Cocoa
 import SpriteKit
 import PlaygroundSupport
 
+/// This class contains the level, player and partner object
+/// and manages the lifecycle of the game.
 public class GameScene: SKScene, SKPhysicsContactDelegate {
     
+    /// Level including tiles for this game.
     var level: Level?
+    
+    /// Your player character.
     var player: Player?
+    
+    /// Your partner character.
     var partner: Partner?
+    
+    /// The mode in which your partner is moving.
+    /// Always initialised to .opposite in the beginning.
     var partnerMode: PartnerMode = .opposite
+    
+    /// Holds all enemies for the current scene.
+    /// Needed for moving the enemies around based on each
+    /// of the player's steps.
     var enemies = [Enemy]()
+    
+    /// Finishing screen, both for success and failure.
     var finishScreen: SKSpriteNode?
     
     public override func sceneDidLoad() {
         physicsWorld.contactDelegate = self
     }
     
+    
+    /// Set the level for the current game session.
+    ///
+    /// - Parameter level: your newly created level.
     public func setLevel(_ level: Level) {
         self.level = level
     }
     
+    
+    /// Enables or disables the buildmode for the current game scene.
+    /// in build mode, all tiles have a border around them to
+    /// easily distinguish them.
     public func turnOnBuildMode() {
         if let level = level {
             level.tiles.forEach { (tiles) in
@@ -32,6 +55,10 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     public func didBegin(_ contact: SKPhysicsContact) {
+        
+        // In case you're standing on a blocked tile by accident,
+        // end the game. This should usually not happen unless you
+        // add switch tiles into the game.
         if let _ = contact.bodyA.node as? BlockedTile, let character = contact.bodyB.node as? Character {
             if character is Player || character is Partner {
                 endGame(withSuccess: false)
@@ -39,15 +66,17 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
         
-        if let switchPartnerModeTile = contact.bodyA.node as? SwitchPartnerModeTile  {
-            partnerMode = switchPartnerModeTile.partnerMode!
-            return
+        // If you or your partner walk onto a switch partner
+        // tile, reset the partnermode.
+        if let switchPartnerModeTile = contact.bodyA.node as? SwitchPartnerModeTile {
+            if (contact.bodyB.node is Partner || contact.bodyB.node is Player) {
+                partnerMode = switchPartnerModeTile.partnerMode!
+                return
+            }
         }
         
-        if let switchTile = contact.bodyA.node as? SwitchTile, let level = level {
-            switchTile.switchedTiles = level.toggleTiles(switchTile.switchedTiles)
-        }
-        
+        // Check whether partner or player object ran into an
+        // enemy.
         if (contact.bodyA.node is Player || contact.bodyA.node is Partner)
             && (contact.bodyB.node is Enemy) {
             if let character = contact.bodyA.node as? Character,
@@ -59,10 +88,12 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
 
         }
         
+        // Check if player and partner are located on the same
+        // tile and if its in the required to stand on tile.
         if (contact.bodyA.node is Player &&
             contact.bodyB.node is RequiredToStandOnTile) || ((contact.bodyB.node is Player &&
                 contact.bodyA.node is RequiredToStandOnTile)) {
-            // Check if the partner is in the same position
+            // Check if the partner is in the same position.
             if partner?.tilePosition == player?.tilePosition {
                 endGame(withSuccess: true)
                 return
@@ -72,8 +103,10 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
             if (contact.bodyA.node is Player && contact.bodyB.node is Partner)
                 || (contact.bodyA.node is Partner && contact.bodyB.node is Player) {
                 
-                // If the level needs a required field to finish on, make sure to check
-                // that as well as its needed for the ending of the level.
+                // If the level needs a required field
+                // to finish on, make sure to check that
+                // as well as its needed for the
+                // ending of the level.
                 
                 if ((level?.requiresStandOnField)!) {
                     if let player = contact.bodyA.node as? Character {
@@ -84,8 +117,6 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
                             }
                         }
                     }
-                    // TODO: Handle here a nice error message that you're not
-                    // standing on the correct tile!!!
                     return
                 }
                 endGame(withSuccess: true)
@@ -108,16 +139,16 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
                 direction = .down
             case UP_ARROW_KEY:
                 direction = .up
-                
-            // Move to mouse based input for this at some later point
-            // in time.
             case RETRY_KEY:
                 retryGame()
             default:
                 break
             }
             
-            if direction != nil && finishScreen == nil {
+            // Only move the character if you're not in
+            // the finish screen,
+            if direction != nil &&
+                finishScreen == nil {
                 moveSceneCharacters(inPlayerDirection: direction!)
             }
         }
@@ -130,8 +161,9 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
             // Move the player first.
             moveCharacter(player, inDirection: playerDirection)
             
-            var partnerDirection: Direction
             // Move partner depending on mode.
+            var partnerDirection: Direction
+        
             switch partnerMode {
             case .opposite:
                 partnerDirection = playerDirection.opposite()
@@ -140,9 +172,8 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
             }
             
             moveCharacter(partner, inDirection: partnerDirection)
-            
-            // Check if the partner and playerCharacter are next to each other,
-            // because this also ends the game.
+
+            // Move all enemies in the scene.
             moveEnemies()
             
         }
@@ -160,6 +191,11 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
             level?.updatePosition(for: partner, on: (partner.initialTilePosition)!)
             partnerMode = .opposite
             
+            // Reposition the enemies into their
+            // initial positions. Reset the
+            // current walk tile index as well as the
+            // reversed mode.
+            
             enemies.forEach { (enemy) in
                 level?.updatePosition(for: enemy, on: enemy.initialTilePosition!)
                 enemy.currentWalkTileIndex = 0
@@ -171,6 +207,7 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
         
     }
     
+    /// Ends the game and shows the appropriate finishing screen.
     private func endGame(withSuccess: Bool) {
         
         switch withSuccess {
@@ -186,6 +223,7 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
         self.addChild(finishScreen!)
     }
     
+    /// Automatically moves all enemies for each turn.
     private func moveEnemies() {
         enemies.forEach { (enemy) in
             
@@ -241,6 +279,12 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
+    
+    /// Move a character onto the specific tile position.
+    ///
+    /// - Parameters:
+    ///   - character: character to move.
+    ///   - tilePosition: tilePosition to set it to.
     private func moveCharacter(_ character: Character, to tilePosition: TilePosition) {
         if isWalkablePosition(at: tilePosition) {
             let tile = level?.getTile(at: tilePosition)
@@ -251,9 +295,14 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
+    /// Move a character in a specific direction.
+    ///
+    /// - Parameters:
+    ///   - character: character to move.
+    ///   - direction: the direction in which to move.
     private func moveCharacter(_ character: Character, inDirection direction: Direction) {
         
-        // Initialise the action and potential tile position to check later.
+        // Initialize the action and potential tile position to check later.
         var moveAction = SKAction()
         var tempTilePos: TilePosition
         
@@ -289,6 +338,7 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     
+    /// Checks whether the given tilePosition can be walked on.
     func isWalkablePosition(at tilePosition: TilePosition) -> Bool {
         if let tile = level?.getTile(at: tilePosition) {
             return tile.walkable
@@ -296,6 +346,12 @@ public class GameScene: SKScene, SKPhysicsContactDelegate {
         return false
     }
     
+    
+    /// Sets a character on a particular tilePosition.
+    ///
+    /// - Parameters:
+    ///   - character: the character to set.
+    ///   - tilePosition: the tilePosition on which to set the character.
     public func setCharacter(_ character: Character, on tilePosition: TilePosition) {
         level?.setCharacter(character, on: tilePosition)
         

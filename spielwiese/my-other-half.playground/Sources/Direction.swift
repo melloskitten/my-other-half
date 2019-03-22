@@ -2,12 +2,16 @@ import Cocoa
 import SpriteKit
 import PlaygroundSupport
 
+
+/// Represents direction of movement of a character.
 enum Direction {
     case left
     case right
     case down
     case up
     
+    
+    /// Gets opposite direction for a given direction.
     func opposite() -> Direction {
         switch self {
         case .left:
@@ -21,6 +25,7 @@ enum Direction {
         }
     }
     
+    /// Gets synchronised direction for a given direction.
     func synchronised() -> Direction {
         return self
     }

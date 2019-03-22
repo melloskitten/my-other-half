@@ -2,18 +2,14 @@ import Cocoa
 import SpriteKit
 import PlaygroundSupport
 
-
+/// Base class for all tiles.
 class Tile: SKSpriteNode {
     var walkable: Bool
     var tilePosition: TilePosition
     
-    // TODO: Contemplate whether this is a good name?
-    var objects: [SKSpriteNode]
-    
     init(walkable: Bool, texture: SKTexture?, color: NSColor, size: CGSize,
          tilePosition: TilePosition) {
         self.walkable = walkable
-        self.objects = []
         self.tilePosition = tilePosition
         super.init(texture: texture, color: color, size: size)
         

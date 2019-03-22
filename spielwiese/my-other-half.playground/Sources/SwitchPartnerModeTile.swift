@@ -2,14 +2,14 @@ import Cocoa
 import SpriteKit
 import PlaygroundSupport
 
+// Tile that can switch the partnermode of a player or
+// enemy.
 class SwitchPartnerModeTile: Tile {
     
     var partnerMode: PartnerMode?
     
     init(_ tilePosition: TilePosition, _ partnerMode: PartnerMode) {
         self.partnerMode = partnerMode
-        
-        // TODO: Switch between tiles for the two modes.
         let textureName = partnerMode == .opposite ? SWITCH_OPP : SWITCH_SYM
         let texture = SKTexture(imageNamed: textureName)
         
